@@ -1,20 +1,25 @@
-final float UNIT_STEP = .05;
-final float BOTTOM = 700;
-final int FENCE_HEIGHT = 30;
-final int FENCE_DISTANCE = 325;
+//STARTUP OPTIONS: Modify these to modify the parameters of the game.
 
+final float UNIT_STEP = .05; //timestep for each frame
+final int FENCE_HEIGHT = 30; //height of the fence
+final int FENCE_DISTANCE = 325; //distance from home plate to fence
+final int STARTING_PLAYER_ID = 0; //defines which character the player will be using on startup
+
+//GAME VARIABLES: Modify these to change the entire program, not just the game parameters.
+
+final float BOTTOM = 700; //y-level of the ground
 float target[] = {random(0, FENCE_DISTANCE), BOTTOM - 20 - random(4*FENCE_HEIGHT), random(0, FENCE_DISTANCE), 20}; //x, y, z, radius
 ArrayList<Float> path = new ArrayList<Float>();
 int index = 0;
 int wait_time = 0;
-int player_id = 0;
+int player_id = STARTING_PLAYER_ID;
 String options[] = {"Little Leaguer", "College Player", "MLB Player", "Babe Ruth", "God"};
 float speed_min_options[] = {5, 15, 25, 28, 55};
 float speed_max_options[] = {20, 34, 38, 44, 100};
-float speed_min = 10;
-float speed_max = 25;
-float LAUNCH_SPEED = random(speed_min, speed_max);
-float launch_vector[] = {LAUNCH_SPEED, -LAUNCH_SPEED, LAUNCH_SPEED};
+float speed_min = speed_min_options[player_id];
+float speed_max = speed_max_options[player_id];
+float launch_speed = random(speed_min, speed_max);
+float launch_vector[] = {launch_speed, -launch_speed, launch_speed};
 float wind_factor[] = {random(-3, 3), random(-3, 3)};
 boolean prep_phase = true; //True if user is choosing the vector; false if user is watching result
 boolean landed = false;
@@ -293,15 +298,14 @@ void keyPressed() {
     } else if (keyCode == 87) {
       wind_factor[0] = random(-3, 3);
       wind_factor[1] = random(-3, 3);
+    } else if (keyCode == 81) {
+      exit();
     }
   }
   keyCode = 0;
 }
 
 void setup() {
-  speed_min = 0;
-  speed_max = 50;
-  LAUNCH_SPEED = random(speed_min, speed_max);
   size(1000, 1000, P3D);
   Ball.setPosition(60.5/sqrt(2), BOTTOM-10, 60.5/(sqrt(2)));
   Ball.setVelocity(-random(60, 72), 0, -random(60, 72));
@@ -325,10 +329,10 @@ void draw() {
         speed_min = speed_min_options[player_id];
         speed_max = speed_max_options[player_id];
         speed_set = true;
-        LAUNCH_SPEED = random(speed_min, speed_max);
-        launch_vector[0] = LAUNCH_SPEED;
-        launch_vector[1] = -LAUNCH_SPEED;
-        launch_vector[2] = LAUNCH_SPEED;
+        launch_speed = random(speed_min, speed_max);
+        launch_vector[0] = launch_speed;
+        launch_vector[1] = -launch_speed;
+        launch_vector[2] = launch_speed;
       }
       drawPath();
     } else {
