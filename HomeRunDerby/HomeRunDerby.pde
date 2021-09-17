@@ -1,9 +1,9 @@
 //STARTUP OPTIONS: Modify these to modify the parameters of the game.
 
 final float UNIT_STEP = .05; //timestep for each frame
-final int FENCE_HEIGHT = 30; //height of the fence
+final int FENCE_HEIGHT = 20; //height of the fence
 final int FENCE_DISTANCE = 325; //distance from home plate to fence
-final int STARTING_PLAYER_ID = 0; //defines which character the player will be using on startup
+final int STARTING_PLAYER_ID = 3; //defines which character the player will be using on startup
 
 //GAME VARIABLES: Modify these to change the entire program, not just the game parameters.
 
@@ -14,12 +14,14 @@ int index = 0;
 int wait_time = 0;
 int player_id = STARTING_PLAYER_ID;
 String options[] = {"Little Leaguer", "College Player", "MLB Player", "Babe Ruth", "God"};
-float speed_min_options[] = {5, 15, 25, 28, 55};
-float speed_max_options[] = {20, 34, 38, 44, 100};
+float speed_min_options[] = {8, 24, 45, 48, 135};
+float speed_max_options[] = {31, 52, 64, 70, 200};
 float speed_min = speed_min_options[player_id];
 float speed_max = speed_max_options[player_id];
 float launch_speed = random(speed_min, speed_max);
-float launch_vector[] = {launch_speed, -launch_speed, launch_speed};
+float launch_vector[] = {launch_speed/sqrt(3), launch_speed/sqrt(3), launch_speed/sqrt(3)};
+float launch_angle_horizontal = 45;
+float launch_angle_vertical = 45;
 float wind_factor[] = {random(-3, 3), random(-3, 3)};
 boolean prep_phase = true; //True if user is choosing the vector; false if user is watching result
 boolean landed = false;
@@ -138,6 +140,12 @@ class projectile {
     return mass; 
   }
 };
+
+void adjustByAngle(float theta, float alpha) {
+  launch_vector[0] = launch_speed*cos(theta*PI/180)*sin(alpha*PI/180);
+  launch_vector[1] = -launch_speed*sin(theta*PI/180);
+  launch_vector[2] = launch_speed*cos(theta*PI/180)*cos(alpha*PI/180);
+}
 
 float calculateDistance(float x1, float y1, float x2, float y2) {
   float distance = 0;
@@ -260,23 +268,21 @@ void drawPath() {
 void keyPressed() {
   if (prep_phase) {
     if (keyCode == UP) {
-      launch_vector[1]-=2; 
-      launch_vector[0]-=2*sqrt(2);
-      launch_vector[2]-=2*sqrt(2);
-    } else if (keyCode == DOWN) {
-      launch_vector[1]+=2;
-      if (launch_vector[1] >= 0) {
-        launch_vector[1] = 0;
-      } else { 
-        launch_vector[0]+=2*sqrt(2);
-        launch_vector[2]+=2*sqrt(2);
+      if (launch_angle_vertical >= 360) {
+        launch_angle_vertical = 360;
+      } else {
+        launch_angle_vertical+=2;
       }
-    } else if (keyCode == LEFT) {  //x is adjacent, z is opposite
-      launch_vector[0]+=2;
-      launch_vector[2]-=2;
+    } else if (keyCode == DOWN) {
+      if (launch_angle_vertical <= 0) {
+        launch_angle_vertical = 0;
+      } else {
+        launch_angle_vertical-=2;
+      }
+    } else if (keyCode == LEFT) {
+      launch_angle_horizontal+=2;
     } else if (keyCode == RIGHT) {
-      launch_vector[0]-=2;
-      launch_vector[2]+=2;
+      launch_angle_horizontal-=2;
     } else if ((keyCode == ENTER) || (keyCode == RETURN)) {
       prep_phase = false;
       wait_time = 180;
@@ -330,10 +336,10 @@ void draw() {
         speed_max = speed_max_options[player_id];
         speed_set = true;
         launch_speed = random(speed_min, speed_max);
-        launch_vector[0] = launch_speed;
-        launch_vector[1] = -launch_speed;
-        launch_vector[2] = launch_speed;
+        launch_angle_horizontal = 45;
+        launch_angle_vertical = 45;
       }
+      adjustByAngle(launch_angle_vertical, launch_angle_horizontal);
       drawPath();
     } else {
       if ((Ball.getPosition(0) < 8) && (Ball.getPosition(2) < 8) && (!contact)) {
