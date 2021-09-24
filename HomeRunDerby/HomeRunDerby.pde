@@ -30,7 +30,7 @@ boolean contact = false;
 boolean hit_balloon = false;
 boolean fair = true;
 boolean speed_set = false;
-float fair_ball_coordinates[] = {0, BOTTOM, 0};
+float last_hit_coordinates[] = {0, BOTTOM, 0};
 int home_runs = 0;
 projectile Ball = new projectile();
 float lastDistance = 0;
@@ -38,13 +38,14 @@ int toggle = 1;
 int toggle_frequency = 3;
 //PGraphics stadium;
 
+//Projectile class: defines functions/variables for the ball.
 class projectile {
-  private float mass = 0.1455;
+  private float mass = 0.1455;                  //Not currently in use
   private float velocity[] = {1, 1, 1};
   private float position[] = {0, BOTTOM - 9, 0};
   
   public void updatePosition() {
-    if ((contact == true) && (first_hit == false)) {
+    if ((contact == true) && (first_hit == false)) {  //Code to add points the ball reaches to the path traced after it
       if (toggle == 1) { 
         path.add(position[0]);
         path.add(position[1]);
@@ -55,30 +56,30 @@ class projectile {
         toggle--;
       }
     }
-    if ((calculateDistance(position[0], position[2], 0, 0) >= FENCE_DISTANCE - 5) && (calculateDistance(position[0], position[2], 0, 0) <= FENCE_DISTANCE + 5) && (position[1] >= (BOTTOM - FENCE_HEIGHT)) && (position[0] >= 0) && (position[2] >= 0)) {
-      velocity[0] = -velocity[0];
+    if ((calculateDistance(position[0], position[2], 0, 0) >= FENCE_DISTANCE - 5) && (calculateDistance(position[0], position[2], 0, 0) <= FENCE_DISTANCE + 5) && (position[1] >= (BOTTOM - FENCE_HEIGHT)) && (position[0] >= 0) && (position[2] >= 0)) { //Case: Ball hits fence
+      velocity[0] = -velocity[0];    //Bounce
       velocity[2] = -velocity[2];
       if (first_hit == false) {
         first_hit = true;
-        fair_ball_coordinates[0] = Ball.getPosition(0);
-        fair_ball_coordinates[1] = Ball.getPosition(1);
-        fair_ball_coordinates[2] = Ball.getPosition(2);
+        last_hit_coordinates[0] = Ball.getPosition(0);
+        last_hit_coordinates[1] = Ball.getPosition(1);
+        last_hit_coordinates[2] = Ball.getPosition(2);
         lastDistance = FENCE_DISTANCE;
       }
-    } if (calculateDistance3D(position[0], position[1], position[2], target[0], target[1], target[2]) <= target[3]) {
+    } if (calculateDistance3D(position[0], position[1], position[2], target[0], target[1], target[2]) <= target[3]) { //Case: Ball hits balloon
       if (!hit_balloon)
         home_runs++;
       hit_balloon = true;
     }
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {    //Increments position using velocity.
       position[i] += (velocity[i] * UNIT_STEP);
     }
-    if (position[1] >= BOTTOM) {
+    if (position[1] >= BOTTOM) { //Case: Ball bounces off the ground
       if (first_hit == false) {
         first_hit = true;
-        fair_ball_coordinates[0] = Ball.getPosition(0);
-        fair_ball_coordinates[1] = Ball.getPosition(1);
-        fair_ball_coordinates[2] = Ball.getPosition(2);
+        last_hit_coordinates[0] = Ball.getPosition(0);
+        last_hit_coordinates[1] = Ball.getPosition(1);
+        last_hit_coordinates[2] = Ball.getPosition(2);
         lastDistance = calculateDistance(0, 0, Ball.getPosition(0), Ball.getPosition(2));
         if ((Ball.getPosition(0) < 0) || (Ball.getPosition(2) < 0)) {
           fair = false; 
@@ -90,9 +91,9 @@ class projectile {
       } else {
         velocity[1] = -velocity[1]/2;
       }
-      if (velocity[0] > 2) {
+      if (velocity[0] > 2) {        //Friction
         velocity[0] -= 50 * UNIT_STEP;
-      } else if (velocity[0] < -2) {
+      } else if (velocity[0] < -2) {  //Friction
         velocity[0] += 50 * UNIT_STEP;
       } else {
         velocity[0] = 0; 
@@ -105,7 +106,7 @@ class projectile {
         velocity[2] = 0; 
       }
     } 
-    if (position[1] < BOTTOM) {
+    if (position[1] < BOTTOM) { //Acceleration due to gravity.
       velocity[1] += 9.8*UNIT_STEP;
     }
     if ((velocity[0] ==  0) && (velocity[1] == 0) && (velocity[2] == 0)) {
@@ -141,7 +142,7 @@ class projectile {
   }
 };
 
-void adjustByAngle(float theta, float alpha) {
+void adjustByAngle(float theta, float alpha) {        //Uses trig and angles to calculate components of launch vector.
   launch_vector[0] = launch_speed*cos(theta*PI/180)*sin(alpha*PI/180);
   launch_vector[1] = -launch_speed*sin(theta*PI/180);
   launch_vector[2] = launch_speed*cos(theta*PI/180)*cos(alpha*PI/180);
@@ -159,7 +160,7 @@ float calculateDistance3D(float x1, float y1, float z1, float x2, float y2, floa
    return distance;
 }
 
-void drawFence() {
+void drawFence() {    //Draws fence using points. Inefficient.
   for (int x = 0; x <= FENCE_DISTANCE*sqrt(2); x++) {
     for (int y = 0; y <= FENCE_HEIGHT; y++) {
       stroke(120);
@@ -173,7 +174,7 @@ void drawFence() {
   }
 }
 
-void drawTarget() {
+void drawTarget() { //Draws target balloon
   if (!hit_balloon) {
     stroke(0, 0, 255);
     translate(target[0], target[1], target[2]);
@@ -186,7 +187,7 @@ void drawTarget() {
   translate(-target[0], -BOTTOM, -target[2]);
 }
 
-void drawSpace() {
+void drawSpace() {  //Draws the stadium, fence, target... essentially the entire space the game takes place in.
   //stadium.beginDraw();
   //Field
   stroke(255);
@@ -212,9 +213,9 @@ void drawSpace() {
 void drawScoreboardAndLastBall() {
   for (int i = 0; i < 2; i++) {
     stroke(255, 0, 0);
-    translate(fair_ball_coordinates[0], fair_ball_coordinates[1], fair_ball_coordinates[2]);
+    translate(last_hit_coordinates[0], last_hit_coordinates[1], last_hit_coordinates[2]);
     sphere(2);
-    translate(-fair_ball_coordinates[0], -fair_ball_coordinates[1], -fair_ball_coordinates[2]);
+    translate(-last_hit_coordinates[0], -last_hit_coordinates[1], -last_hit_coordinates[2]);
   }
   textSize(50);
   scale(-1, 1);
@@ -247,14 +248,14 @@ void reset() {
   index = 0;
 }
 
-void drawTrace() {
+void drawTrace() {  //Draws path that the ball has taken so far.
   for (int i = 0; i < index; i++) {
     stroke(255, 0, 0);
     point(path.get(3*i), path.get((3*i) + 1), path.get((3*i) + 2));
   }
 }
 
-void drawPath() {
+void drawLaunchVector() {
   stroke(255, 255, 0);
   line(0, BOTTOM - 5, 0,  launch_vector[0], (BOTTOM - 5 + launch_vector[1]), launch_vector[2]);
   stroke(255, 255, 0);
@@ -340,7 +341,7 @@ void draw() {
         launch_angle_vertical = 45;
       }
       adjustByAngle(launch_angle_vertical, launch_angle_horizontal);
-      drawPath();
+      drawLaunchVector();
     } else {
       if ((Ball.getPosition(0) < 8) && (Ball.getPosition(2) < 8) && (!contact)) {
         for (int i = 0; i < 3; i++) {
